@@ -1,3 +1,7 @@
 <Solution>
+  <Folder Name="/Example/">
+    <Project Path="EntMap.Example/EntMap.Example.csproj" />
+    <Project Path="EntMap.Exmaple.Dto/EntMap.Exmaple.Dto.csproj" />
+  </Folder>
   <Project Path="EntMap/EntMap.csproj" />
 </Solution>

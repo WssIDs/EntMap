@@ -14,7 +14,7 @@
 		<Version>0.0.1</Version>
 		<Authors>WssIDs</Authors>
 		<Description>Source generator and runtime infrastructure for high-performance mapping</Description>
-
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<!-- Говорим NuGet, что мы сами настроим сборку содержимого для папки analyzers/ -->
 		<TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);_AddAnalyzersToPackage</TargetsForTfmSpecificContentInPackage>
 	</PropertyGroup>
