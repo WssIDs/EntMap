@@ -1,0 +1,39 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>netstandard2.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+		<AnalyzerLanguage>cs</AnalyzerLanguage>
+		<IsRoslynComponent>true</IsRoslynComponent>
+		<LangVersion>latest</LangVersion>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<IncludeBuildOutput>true</IncludeBuildOutput>
+		<PackageId>EntMap</PackageId>
+		<Version>0.0.1</Version>
+		<Authors>WssIDs</Authors>
+		<Description>Source generator and runtime infrastructure for high-performance mapping</Description>
+
+		<!-- Говорим NuGet, что мы сами настроим сборку содержимого для папки analyzers/ -->
+		<TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);_AddAnalyzersToPackage</TargetsForTfmSpecificContentInPackage>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="5.9.0">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.9.0" PrivateAssets="all" />
+	</ItemGroup>
+
+	<!-- ========================================== -->
+	<!-- ЦЕЛЬ УПАКОВКИ ГЕНЕРАТОРА КАК АНАЛИЗАТОРА   -->
+	<!-- ========================================== -->
+	<Target Name="_AddAnalyzersToPackage" Label="Упаковывает текущую DLL как анализатор в специальную папку NuGet">
+		<ItemGroup>
+			<TfmSpecificPackageFile Include="$(OutputPath)\$(AssemblyName).dll"
+									PackagePath="analyzers/dotnet/cs" />
+		</ItemGroup>
+	</Target>
+</Project>
