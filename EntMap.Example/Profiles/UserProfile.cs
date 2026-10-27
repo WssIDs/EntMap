@@ -4,7 +4,7 @@ using EntMap.Exmaple.Dto;
 
 namespace EntMap.Example.Profiles
 {
-    internal class UserProfile : MappingProfile
+    internal class UserProfile : EntMappingProfile
     {
         public UserProfile()
         {
