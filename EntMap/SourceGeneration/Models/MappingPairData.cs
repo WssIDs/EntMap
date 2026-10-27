@@ -1,10 +1,15 @@
 ﻿namespace EntMap.SourceGeneration.Models
 {
-    public class MappingPairData
+    public sealed class MappingPairData
     {
-        public string Source { get; set; } = string.Empty;
-        public string Target { get; set; } = string.Empty;
-        public List<PropertyMappingInfo> TargetProperties { get; set; } = new();
-        public List<string> SourcePropertyNames { get; set; } = new();
+        public string Source { get; init; } = string.Empty;
+        public string Target { get; init; } = string.Empty;
+        public List<PropertyMappingInfo> TargetProperties { get; } = [];
+        public List<string> SourcePropertyNames { get; } = [];
     }
+}
+
+namespace System.Runtime.CompilerServices
+{
+    internal static class IsExternalInit { }
 }

@@ -88,10 +88,10 @@ If you need custom mapping rules (e.g., when property names do not match), you c
 
 ### 1. Create a Mapping Profile
 
-Inherit from `MappingProfile` to configure explicit member matching rules.
+Inherit from `EntMappingProfile` to configure explicit member matching rules.
 
 ```csharp
-public class UserProfile : MappingProfile
+public class UserProfile : EntMappingProfile
 {
     public UserProfile()
     {

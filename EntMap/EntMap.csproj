@@ -11,15 +11,29 @@
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<IncludeBuildOutput>true</IncludeBuildOutput>
 		<PackageId>EntMap</PackageId>
-		<Version>0.0.1</Version>
+		<Version>0.0.2</Version>
 		<Authors>WssIDs</Authors>
 		<Description>Source generator and runtime infrastructure for high-performance mapping</Description>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<!-- Говорим NuGet, что мы сами настроим сборку содержимого для папки analyzers/ -->
 		<TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);_AddAnalyzersToPackage</TargetsForTfmSpecificContentInPackage>
+		<Title>EntMap</Title>
+		<PackageIcon>icon.png</PackageIcon>
+		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<RepositoryUrl>https://github.com/WssIDs/EntMap</RepositoryUrl>
+		<PackageProjectUrl>https://github.com/WssIDs/EntMap</PackageProjectUrl>
+		<PackageTags>Mappers</PackageTags>
 	</PropertyGroup>
-
 	<ItemGroup>
+		<None Include="..\README.md" Pack="true" PackagePath="\" />
+		<None Update="icon.png">
+		  <Pack>True</Pack>
+		  <PackagePath></PackagePath>
+		</None>
+	</ItemGroup>
+	<ItemGroup>
+		<CompilerVisibleProperty Include="RootNamespace" />
 		<PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="5.9.0">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -32,8 +46,7 @@
 	<!-- ========================================== -->
 	<Target Name="_AddAnalyzersToPackage" Label="Упаковывает текущую DLL как анализатор в специальную папку NuGet">
 		<ItemGroup>
-			<TfmSpecificPackageFile Include="$(OutputPath)\$(AssemblyName).dll"
-									PackagePath="analyzers/dotnet/cs" />
+			<TfmSpecificPackageFile Include="$(OutputPath)\$(AssemblyName).dll" PackagePath="analyzers/dotnet/cs" />
 		</ItemGroup>
 	</Target>
 </Project>

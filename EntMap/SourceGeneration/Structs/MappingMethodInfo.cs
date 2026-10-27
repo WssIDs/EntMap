@@ -41,7 +41,7 @@ namespace EntMap.SourceGeneration.Structs
         {
             unchecked
             {
-                int hash = 17;
+                var hash = 17;
                 hash = hash * 23 + (ClassName ?? "").GetHashCode();
                 hash = hash * 23 + (Namespace ?? "").GetHashCode();
                 hash = hash * 23 + (MethodName ?? "").GetHashCode();
