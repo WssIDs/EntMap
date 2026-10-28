@@ -137,8 +137,7 @@ foreach (var item in dest)
 // 3 Test3 New Name test3@mail.com
 ```
 
-## Usage Example with Extension Methods
-#### Without Mapping Profiles - WIP
+## Usage Example with Extension Methods With Mapping Profiles
 
 You can perform data mapping directly on the objects using **extension methods**. Thanks to compile-time code generation, these methods transform your data with maximum execution speed and zero reflection.
 
@@ -190,3 +189,31 @@ foreach (var item in dest)
 // 2 Test2 test2@mail.com
 // 3 Test3 test3@mail.com 
 ```
+
+### Usage Example With Interceptors (New)
+
+A compiler feature (introduced as an experimental feature in C# 12 / .NET 8) that allows substituting a call to one method with another directly at compile time.
+To do this, you need to add the following line to the project file (.csproj)
+```xml
+<InterceptorsNamespaces>$(InterceptorsNamespaces);EntMap.Example</InterceptorsNamespaces>
+```
+### 1. Map Objects Directly
+
+```csharp
+var source = new UserDto()
+{
+    Id = 1,
+    Name = "Test1",
+    Email = "test1@mail.com"
+};
+
+var dest = EntMapper.Map<UserDto,UserModel>(source, cfg => cfg
+    .ForMember(x => x.Name, src => "Test"));
+
+Console.WriteLine(dest);
+
+// Results:
+1 Test test1@mail.com
+```
+
+

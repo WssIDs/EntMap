@@ -1,6 +1,6 @@
 ﻿
 using EntMap.Example;
 
-ExampleManager.ListObjectsMappingExtensions();
+ExampleManager.SingleObjectMapping();
 
 Console.WriteLine("End");

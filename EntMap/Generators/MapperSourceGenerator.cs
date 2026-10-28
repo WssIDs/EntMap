@@ -35,10 +35,25 @@ public class MapperSourceGenerator : IIncrementalGenerator
                 .Select(g => g.First())
         );
 
+        // 2. ИСПРАВЛЕНИЕ: Выделенный, надежный предикат для инлайн-вызовов.
+        // Он гарантирует, что узел — это вызов метода, содержащий "Map" и имеющий generic-блок.
+        var detectedInlineCalls = context.SyntaxProvider
+            .CreateSyntaxProvider(
+                predicate: static (s, _) => IsInlineMapCallSyntax(s),
+                // Передаем весь синтаксический контекст ctx вместо ручного разделения на Node и Model
+                transform: static (ctx, _) => ctx.GetInlineMappingCallSafe(ctx.SemanticModel))
+            .Where(static call => call != null);
+
+        // 3. Объединяем стандартные пары и инлайн-вызовы для генерации в один шаг
+        var combinedData = uniquePairs.Collect()
+            .Combine(detectedInlineCalls.Collect())
+            .Combine(context.CompilationProvider);
+        
         // 3. Вывод кода — этот шаг сработает ВСЕГДА, даже если пар 0.
-        context.RegisterSourceOutput(uniquePairs.Collect().Combine(context.CompilationProvider), static (spc, tuple) =>
+        context.RegisterSourceOutput(combinedData, static (spc, tuple) =>
         {
-            var allPairs = tuple.Left;
+            var allPairs = tuple.Left.Left;
+            var inlineCalls = tuple.Left.Right;
             var compilation = tuple.Right;
 
             var currentNamespace = compilation.AssemblyName ?? GlobalMapperConstants.MainNamespace;
@@ -46,16 +61,29 @@ public class MapperSourceGenerator : IIncrementalGenerator
             var encoding = Encoding.UTF8;
             const string extension = ".g.cs";
             
-            // Генерируем базовую инфраструктуру прямо в этом же шаге, чтобы гарантировать синхронность namespace!
-            var infrastructureCode = MapperSourceGeneratorConstants.GetInfrastructureSource(currentNamespace);
-            spc.AddSource($"{GlobalMapperConstants.ClassName}{extension}", SourceText.From(infrastructureCode, encoding));
-
+            // Модифицируем метод сборки: передаем туда коллекцию inlineCalls
+            var builder = new EntMap.Builders.GlobalMapperSourceBuilder(allPairs, currentNamespace);
+            var code = builder.BuildWithInline(inlineCalls!); 
+            
             // Генерируем регистратор
-            var code = allPairs.GenerateGlobalMapperCode(currentNamespace);
+            //var code = allPairs.GenerateGlobalMapperCode(currentNamespace);
             spc.AddSource($"{MapperSourceGeneratorConstants.EntMapGlobalRegisterClassName}{extension}", SourceText.From(code, encoding));
         });
     }
 
+    // ИСПРАВЛЕНИЕ: Точечный синтаксический предикат специально под инлайн-маппинг
+    private static bool IsInlineMapCallSyntax(SyntaxNode node)
+    {
+        if (node is not InvocationExpressionSyntax invocation) return false;
+        
+        // Инлайн-маппинг всегда принимает ровно 2 аргумента: (source, cfg => ...)
+        if (invocation.ArgumentList.Arguments.Count != 2) return false;
+
+        var exprStr = invocation.Expression.ToString();
+        // Проверяем, что в вызове фигурирует Map и generic-скобки
+        return exprStr.Contains("Map") && exprStr.Contains("<") && exprStr.Contains(">");
+    }
+    
     private static bool IsMapperMapCall(SyntaxNode node)
     {
         switch (node)

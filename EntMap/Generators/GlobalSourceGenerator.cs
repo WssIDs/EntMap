@@ -24,17 +24,26 @@ public class GlobalSourceGenerator : IIncrementalGenerator
         
         context.RegisterSourceOutput(rootNamespaceProvider, (ctx, rootNamespace) =>
         {
-            ctx.AddSource($"{GlobalSourceGeneratorConstants.EntMappingProfileClassName}.g.cs",
+            var encoding = Encoding.UTF8;
+            const string extension = ".g.cs";
+            
+            ctx.AddSource($"{GlobalSourceGeneratorConstants.EntMappingProfileClassName}{extension}",
                 SourceText.From(GlobalSourceGeneratorConstants.GetEntMappingProfileSource(rootNamespace), Encoding.UTF8));
             
-            ctx.AddSource($"{GlobalSourceGeneratorConstants.MapContextClassName}.g.cs",
+            ctx.AddSource($"{GlobalSourceGeneratorConstants.MapContextClassName}{extension}",
                 SourceText.From(GlobalSourceGeneratorConstants.GetMapContextSource, Encoding.UTF8));
             
-            ctx.AddSource($"{GlobalSourceGeneratorConstants.MappingContextClassName}.g.cs",
+            ctx.AddSource($"{GlobalSourceGeneratorConstants.MappingContextClassName}{extension}",
                 SourceText.From(GlobalSourceGeneratorConstants.GetMappingContextSource, Encoding.UTF8));
 
-            ctx.AddSource($"{AttributeSourceGeneratorConstants.MapperAttributeClassName}.g.cs",
+            ctx.AddSource($"{AttributeSourceGeneratorConstants.MapperAttributeClassName}{extension}",
                 SourceText.From(AttributeSourceGeneratorConstants.GetInfrastructureSource, Encoding.UTF8));
+            
+            // Генерируем базовую инфраструктуру прямо в этом же шаге, чтобы гарантировать синхронность namespace!
+            ctx.AddSource($"{GlobalMapperConstants.ClassName}{extension}", SourceText.From(MapperSourceGeneratorConstants.GetEntMapGlobalRegisterSource(rootNamespace), encoding));
+
+            
+            ctx.AddSource($"{MapperSourceGeneratorConstants.EntMapInlineGlobalRegisterClassName}{extension}", SourceText.From(MapperSourceGeneratorConstants.GetEntMapInlineGlobalRegisterSource(rootNamespace), Encoding.UTF8));
         });
     }
 }

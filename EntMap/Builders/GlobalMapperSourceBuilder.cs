@@ -9,6 +9,83 @@ public class GlobalMapperSourceBuilder(ImmutableArray<MappingPairData> pairs, st
 {
     private readonly IndentedStringBuilder _sb = new();
 
+    // 1. Добавьте метод верхнего уровня для вызова из генератора
+    public string BuildWithInline(System.Collections.Immutable.ImmutableArray<InlineMappingCallData> inlineCalls)
+    {
+        _sb.Clear();
+
+        BuildHeader()
+            .BuildNamespaceStart()
+            .BuildClassStart()
+            .BuildInitMappersMethod()
+            .BuildMappingMethods();
+
+        // НОВЫЙ ВЫЗОВ: Генерируем жестко скомпилированные инлайн методы с атрибутами перехвата
+        BuildInlineInterceptorMethods(inlineCalls);
+
+        BuildClassEnd()
+            .BuildNamespaceEnd();
+
+        return _sb.ToString();
+    }
+
+    // 2. Добавьте генератор инлайн-методов
+    private void BuildInlineInterceptorMethods(
+        System.Collections.Immutable.ImmutableArray<InlineMappingCallData> inlineCalls)
+    {
+        foreach (var call in inlineCalls)
+        {
+            _sb.AppendLine("/// <summary> Расширенный метод маппинга игнорируя профиль, для этого нужно подключить функцию intercerptors в csproj <br/>");
+            _sb.AppendLine("///<InterceptorsNamespaces>$(InterceptorsNamespaces);EntMap.Example;EntMap.Generators</InterceptorsNamespaces>");
+            _sb.AppendLine("/// </summary>");
+            // ИСПРАВЛЕНИЕ ДЛЯ .NET 10: Используем новый стабильный конструктор атрибута с версией и хэш-данными
+            _sb.AppendLine(
+                $"        [System.Runtime.CompilerServices.InterceptsLocation({call.InterceptorVersion}, \"{call.InterceptorData}\")]");
+            _sb.AppendLine(
+                $"        public static {call.TargetType} {call.UniqueMethodName}({call.SourceType} data, System.Action<{namespaceName}.{GlobalMapperConstants.ClassName}.InlineConfig<{call.SourceType}, {call.TargetType}>> _ignoredConfigDelegate)");
+            _sb.AppendLine("        {");
+            _sb.IncrementIndent();
+
+            _sb.AppendLine("if (data == null) return null!;");
+            _sb.AppendLine(
+                $"var dto = ({call.TargetType})System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(typeof({call.TargetType}));");
+            _sb.AppendLine();
+
+            foreach (var targetProp in call.TargetProperties)
+            {
+                if (call.CustomExpressions.TryGetValue(targetProp.Name, out var inlineExpression))
+                {
+                    _sb.AppendLine($"dto.{targetProp.Name} = {inlineExpression};");
+                    continue;
+                }
+
+                var matchingSourcePropName = call.SourcePropertyNames
+                    .FirstOrDefault(name => string.Equals(name, targetProp.Name, StringComparison.OrdinalIgnoreCase));
+
+                if (matchingSourcePropName == null)
+                {
+                    if (targetProp.IsRequired) _sb.AppendLine($"dto.{targetProp.Name} = default!;");
+                    continue;
+                }
+
+                if (targetProp.IsSimple)
+                {
+                    _sb.AppendLine($"dto.{targetProp.Name} = ({targetProp.TypeDisplay})data.{matchingSourcePropName};");
+                }
+                else
+                {
+                    _sb.AppendLine(
+                        $"dto.{targetProp.Name} = data.{matchingSourcePropName} != null ? Map<{targetProp.TypeDisplay}>(data.{matchingSourcePropName}) : default!;");
+                }
+            }
+
+            _sb.AppendLine("return dto;");
+            _sb.DecrementIndent();
+            _sb.AppendLine("        }");
+            _sb.AppendLine();
+        }
+    }
+
     public string Build()
     {
         _sb.Clear();
@@ -30,6 +107,7 @@ public class GlobalMapperSourceBuilder(ImmutableArray<MappingPairData> pairs, st
         _sb.AppendLine("#nullable enable");
         _sb.AppendLine("using System.Linq;");
         _sb.AppendLine("using System.Collections.Generic;");
+        _sb.AppendLine("using System.Runtime.CompilerServices;"); 
         _sb.AppendLine();
         _sb.AppendLine($"// Всего обнаружено уникальных пар для кодогенерации: {pairs.Length}");
         return this;
