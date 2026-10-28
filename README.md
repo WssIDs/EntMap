@@ -190,10 +190,11 @@ foreach (var item in dest)
 // 3 Test3 test3@mail.com 
 ```
 
-### Usage Example With Interceptors (New)
+## Usage Example With Interceptors (New)
 
 A compiler feature (introduced as an experimental feature in C# 12 / .NET 8) that allows substituting a call to one method with another directly at compile time.
 To do this, you need to add the following line to the project file (.csproj)
+
 ```xml
 <InterceptorsNamespaces>$(InterceptorsNamespaces);EntMap.Example</InterceptorsNamespaces>
 ```
