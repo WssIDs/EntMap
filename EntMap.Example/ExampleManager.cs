@@ -15,8 +15,9 @@ namespace EntMap.Example
                 Email = "test1@mail.com"
             };
 
-            var dest = EntMapper.Map<UserDto,UserModel>(source, cfg => cfg
-                .ForMember(x => x.Name, src => "Test"));
+            var dest = EntMapper.Map<UserModel>(source);
+
+            var dd = source.ToModel();
 
             Console.WriteLine(dest);
         }

@@ -138,7 +138,30 @@ public class GlobalMapperSourceBuilder(ImmutableArray<MappingPairData> pairs, st
         foreach (var pair in pairs)
         {
             var methodName = GetSafeMethodName(pair);
+
+            // 1. Регистрация базовой пары (как и было)
             _sb.AppendLine($"_mappers[(typeof({pair.Source}), typeof({pair.Target}))] = new System.Func<object, {pair.Target}>(src => {methodName}(({pair.Source})src));");
+
+            // 2. КОМПИЛЯЦИОННАЯ ГЕНЕРАЦИЯ ДЛЯ КОЛЛЕКЦИЙ: 
+            // Автоматически регистрируем List<Source> -> List<Target>
+            var sourceList = $"System.Collections.Generic.List<{pair.Source}>";
+            var targetList = $"System.Collections.Generic.List<{pair.Target}>";
+
+            _sb.AppendLine($"_mappers[(typeof({sourceList}), typeof({targetList}))] = new System.Func<object, {targetList}>(src => ");
+            _sb.AppendLine("{");
+            _sb.IncrementIndent();
+            _sb.AppendLine($"var sourceList = ({sourceList})src;");
+            _sb.AppendLine($"var targetList = new System.Collections.Generic.List<{pair.Target}>(sourceList.Count);");
+            _sb.AppendLine("for (int i = 0; i < sourceList.Count; i++)");
+            _sb.AppendLine("{");
+            _sb.IncrementIndent();
+            // Прямой статический вызов конкретного метода маппинга без рефлексии!
+            _sb.AppendLine($"targetList.Add({methodName}(sourceList[i]));");
+            _sb.DecrementIndent();
+            _sb.AppendLine("}");
+            _sb.AppendLine("return targetList;");
+            _sb.DecrementIndent();
+            _sb.AppendLine("});");
         }
 
         _sb.DecrementIndent();
@@ -199,10 +222,7 @@ public class GlobalMapperSourceBuilder(ImmutableArray<MappingPairData> pairs, st
 
             if (matchingSourcePropName == null)
             {
-                if (targetProp.IsRequired)
-                {
-                    _sb.AppendLine($"dto.{targetProp.Name} = default!;");
-                }
+                if (targetProp.IsRequired) _sb.AppendLine($"dto.{targetProp.Name} = default!;");
                 continue;
             }
 
@@ -212,7 +232,13 @@ public class GlobalMapperSourceBuilder(ImmutableArray<MappingPairData> pairs, st
             }
             else if (targetProp.IsEnumerable)
             {
-                // Используем коллекционные выражения из C# 12 [.. spread]
+                // Берем безопасное имя метода маппинга для внутренних типов элементов
+                var cleanSourceItemType = pair.Source; // В реальном генераторе тут должен быть тип элемента исходного свойства.
+                                                       // Но еще проще и надежнее использовать прямое обращение к методу маппера элементов через LINQ Select:
+                var itemMapperName = $"Map{Clean(pair.Source)}To{Clean(targetProp.ItemTypeDisplay!)}"; // Если у вас есть доступ к исходному типу свойства
+
+                // Самый надежный compile-time вариант без угадывания имени метода — использовать глобальный Map, 
+                // так как вложенный тип элемента тоже сгенерирует свою пару в pairs:
                 _sb.AppendLine($"dto.{targetProp.Name} = data.{matchingSourcePropName} != null ? [.. data.{matchingSourcePropName}.Select(x => {namespaceName}.{GlobalMapperConstants.ClassName}.Map<{targetProp.ItemTypeDisplay}>(x))] : new();");
             }
             else
@@ -221,6 +247,10 @@ public class GlobalMapperSourceBuilder(ImmutableArray<MappingPairData> pairs, st
             }
         }
     }
+
+    // Вспомогательный метод очистки строк для генерации имен (продублирован для использования в блоке выше)
+    private static string Clean(string typeName) => typeName
+        .Replace(".", "").Replace("<", "").Replace(">", "").Replace(" ", "").Replace("[]", "Array").Replace("global::", "").Replace(":", "");
 
     private GlobalMapperSourceBuilder BuildClassEnd()
     {

@@ -11,7 +11,7 @@
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<IncludeBuildOutput>true</IncludeBuildOutput>
 		<PackageId>EntMap</PackageId>
-		<Version>0.0.3</Version>
+		<Version>0.0.4</Version>
 		<Authors>WssIDs</Authors>
 		<Description>Source generator and runtime infrastructure for high-performance mapping</Description>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -26,7 +26,7 @@
 		<PackageTags>Mappers</PackageTags>
 		<InterceptorsNamespaces>$(InterceptorsNamespaces);EntMap.Example;EntMap.Generators</InterceptorsNamespaces>
 		<Copyright>WssIDs 2026</Copyright>
-		<PackageReleaseNotes>Implemented Mapping Profile usage in Extension methods and Interceptors-based Inline Mapping Profiles</PackageReleaseNotes>
+		<PackageReleaseNotes>Fix generator: Moved mapping logic from runtime to compile time, except for type lookup</PackageReleaseNotes>
 	</PropertyGroup>
 	<ItemGroup>
 		<None Include="..\README.md" Pack="true" PackagePath="\" />

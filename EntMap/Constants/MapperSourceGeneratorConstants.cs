@@ -23,37 +23,21 @@ public static class MapperSourceGeneratorConstants
 
                   static partial void InitMappers();
 
+                  // Чистый и быстрый рантайм-метод: О(1) поиск без Reflection
                   public static TTarget Map<TTarget>(object source)
                   {
                       if (source == null) return default!;
-              
+
                       var sourceType = source.GetType();
                       var targetType = typeof(TTarget);
                       var key = (sourceType, targetType);
-              
+
                       if (_mappers.TryGetValue(key, out var del))
                       {
                           return ((System.Func<object, TTarget>)del)(source);
                       }
 
-                      if (source is System.Collections.IEnumerable enumerable && targetType.IsGenericType)
-                      {
-                          var targetItemType = targetType.GetGenericArguments().FirstOrDefault();
-                          if (targetItemType != null)
-                          {
-                              var listType = typeof(System.Collections.Generic.List<>).MakeGenericType(targetItemType);
-                              var list = (System.Collections.IList)System.Activator.CreateInstance(listType)!;
-                              foreach (var item in enumerable)
-                              {
-                                  if (item == null) continue;
-                                  var mapMethod = typeof({{GlobalMapperConstants.ClassName}}).GetMethod("Map")!.MakeGenericMethod(targetItemType);
-                                  list.Add(mapMethod.Invoke(null, new[] { item }));
-                              }
-                              return (TTarget)list;
-                          }
-                      }
-
-                      throw new System.InvalidOperationException($"Mapping from {sourceType.Name} to {targetType.Name} is not generated.");
+                      throw new System.InvalidOperationException($"Mapping from {sourceType.Name} to {targetType.Name} is not generated at compile-time.");
                   }
               }
           }
